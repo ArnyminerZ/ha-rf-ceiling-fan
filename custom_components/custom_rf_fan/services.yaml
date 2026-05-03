@@ -1,0 +1,20 @@
+calibrate_state:
+  name: Calibrate State
+  description: Force-update the target entity's internal is_on property to fix desynced UI states without transmitting an RF signal.
+  fields:
+    entity_id:
+      name: Entity
+      description: The fan or light entity to calibrate.
+      required: true
+      selector:
+        entity:
+          integration: custom_rf_fan
+    state:
+      name: State
+      description: The state to force onto the entity.
+      required: true
+      selector:
+        select:
+          options:
+            - "on"
+            - "off"

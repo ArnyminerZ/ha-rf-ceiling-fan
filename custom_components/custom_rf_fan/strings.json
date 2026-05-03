@@ -1,0 +1,35 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Universal RF Fan: Hardware",
+        "description": "Select the RF transmitter entity to use.",
+        "data": {
+          "transmitter_id": "RF Transmitter Entity"
+        }
+      },
+      "learn_code": {
+        "title": "Learn: {button}",
+        "description": "Press the button for {button} on your remote, or enter it manually below.",
+        "data": {
+          "manual_code": "Manual Code (optional)"
+        },
+        "errors": {
+          "timeout": "Timeout waiting for signal."
+        }
+      },
+      "optional_features": {
+        "title": "Optional Features",
+        "data": {
+          "optional_features": "Features"
+        }
+      },
+      "fan_speeds_config": {
+        "title": "Fan Speeds",
+        "data": {
+          "speed_count": "Speeds"
+        }
+      }
+    }
+  }
+}
