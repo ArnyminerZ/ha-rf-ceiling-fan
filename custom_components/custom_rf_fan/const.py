@@ -14,6 +14,9 @@ CONF_COLOR_TEMP = "color_temp"
 
 CONF_OPTIONAL_FEATURES = "optional_features"
 
+DEFAULT_DIMMING_LEVELS = 30
+DEFAULT_DIMMING_DELAY_MS = 100
+
 EVENT_RF_RAW = "radio_frequency.raw_event"
 
 SIGNAL_STATE_UPDATED = f"{DOMAIN}_state_updated"

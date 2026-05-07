@@ -25,6 +25,13 @@
           "optional_features": "Features"
         }
       },
+      "light_dimming_config": {
+        "title": "Light Dimming",
+        "data": {
+          "dimming_levels": "Total Dimming Levels",
+          "dimming_delay_ms": "Delay Between Presses (ms)"
+        }
+      },
       "fan_speeds_config": {
         "title": "Fan Speeds",
         "data": {

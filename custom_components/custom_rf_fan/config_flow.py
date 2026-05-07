@@ -22,6 +22,8 @@ from .const import (
     CONF_LIGHT_DIMMING,
     CONF_COLOR_TEMP,
     CONF_OPTIONAL_FEATURES,
+    DEFAULT_DIMMING_LEVELS,
+    DEFAULT_DIMMING_DELAY_MS,
     EVENT_RF_RAW,
 )
 
@@ -149,6 +151,8 @@ class UniversalRFFanConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             
             if CONF_FAN_SPEEDS in features:
                 return await self.async_step_fan_speeds_config()
+            if CONF_LIGHT_DIMMING in features:
+                return await self.async_step_light_dimming_config()
                 
             return await self.async_step_optional_learning_setup()
 
@@ -179,6 +183,9 @@ class UniversalRFFanConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         """Ask for number of fan speeds."""
         if user_input is not None:
             self._data["speed_count"] = int(user_input["speed_count"])
+            features = self._data.get(CONF_OPTIONAL_FEATURES, [])
+            if CONF_LIGHT_DIMMING in features:
+                return await self.async_step_light_dimming_config()
             return await self.async_step_optional_learning_setup()
 
         return self.async_show_form(
@@ -192,6 +199,25 @@ class UniversalRFFanConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                             translation_key="speed_count",
                         )
                     )
+                }
+            ),
+        )
+
+    async def async_step_light_dimming_config(
+        self, user_input: dict[str, Any] | None = None
+    ) -> FlowResult:
+        """Ask for dimming configuration."""
+        if user_input is not None:
+            self._data["dimming_levels"] = int(user_input["dimming_levels"])
+            self._data["dimming_delay_ms"] = int(user_input["dimming_delay_ms"])
+            return await self.async_step_optional_learning_setup()
+
+        return self.async_show_form(
+            step_id="light_dimming_config",
+            data_schema=vol.Schema(
+                {
+                    vol.Required("dimming_levels", default=DEFAULT_DIMMING_LEVELS): vol.All(vol.Coerce(int), vol.Range(min=1, max=100)),
+                    vol.Required("dimming_delay_ms", default=DEFAULT_DIMMING_DELAY_MS): vol.All(vol.Coerce(int), vol.Range(min=0, max=2000)),
                 }
             ),
         )

@@ -25,6 +25,13 @@
           "optional_features": "Característiques"
         }
       },
+      "light_dimming_config": {
+        "title": "Atenuació de la llum",
+        "data": {
+          "dimming_levels": "Nivells totals d'atenuació",
+          "dimming_delay_ms": "Retard entre pulsacions (ms)"
+        }
+      },
       "fan_speeds_config": {
         "title": "Velocitats del ventilador",
         "data": {

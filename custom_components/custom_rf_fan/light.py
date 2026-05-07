@@ -1,6 +1,7 @@
 """Light platform for Universal RF Ceiling Fan."""
 from __future__ import annotations
 
+import asyncio
 import logging
 from typing import Any
 
@@ -24,6 +25,8 @@ from .const import (
     CONF_LIGHT_DIMMING,
     CONF_COLOR_TEMP,
     CONF_OPTIONAL_FEATURES,
+    DEFAULT_DIMMING_LEVELS,
+    DEFAULT_DIMMING_DELAY_MS,
     SIGNAL_STATE_UPDATED,
 )
 
@@ -119,21 +122,34 @@ class UniversalRFLight(UniversalRFEntity, LightEntity):
         # Handle brightness slider
         if ATTR_BRIGHTNESS in kwargs:
             new_brightness = kwargs[ATTR_BRIGHTNESS]
+            dimming_levels = self._entry.data.get("dimming_levels", DEFAULT_DIMMING_LEVELS)
+            dimming_delay_ms = self._entry.data.get("dimming_delay_ms", DEFAULT_DIMMING_DELAY_MS)
+            
+            new_level = max(1, round((new_brightness / 255) * dimming_levels))
             
             if self._attr_brightness is not None:
-                if new_brightness > self._attr_brightness:
+                # Calculate step difference
+                current_level = round((self._attr_brightness / 255) * dimming_levels)
+                steps = new_level - current_level
+                
+                if steps > 0:
                     code_key = "brighten"
-                elif new_brightness < self._attr_brightness:
+                    num_presses = steps
+                elif steps < 0:
                     code_key = "dim"
+                    num_presses = abs(steps)
                 else:
                     code_key = None
+                    num_presses = 0
                     
-                if code_key and (code := self._entry.data.get(code_key)):
-                    # Note: We send the code once per slider movement. 
-                    # If the RF requires holding, the user might need to adjust the slider multiple times.
-                    await async_send_command(self.hass, self._transmitter_id, self._get_command(code))
+                if code_key and num_presses > 0 and (code := self._entry.data.get(code_key)):
+                    for i in range(num_presses):
+                        await async_send_command(self.hass, self._transmitter_id, self._get_command(code))
+                        if i < num_presses - 1:
+                            await asyncio.sleep(dimming_delay_ms / 1000.0)
                     
-            self._attr_brightness = new_brightness
+            # Snap the UI brightness to the actual calculated step level
+            self._attr_brightness = round((new_level / dimming_levels) * 255)
             self._attr_is_on = True
             self.async_write_ha_state()
             return
