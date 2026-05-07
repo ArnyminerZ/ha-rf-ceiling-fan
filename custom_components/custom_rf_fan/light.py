@@ -70,7 +70,7 @@ class UniversalRFLight(UniversalRFEntity, LightEntity):
     def extra_state_attributes(self) -> dict[str, Any]:
         """Return entity specific state attributes."""
         attrs = {"toggle_code": self._light_toggle_code}
-        for key in ["dim_up", "dim_down", "temp_warm", "temp_cool"]:
+        for key in ["dim_up", "dim_down", "temp_warm", "temp_neutral", "temp_cool"]:
             if val := self._entry.data.get(key):
                 attrs[f"{key}_code"] = val
         return attrs

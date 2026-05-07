@@ -18,6 +18,7 @@ from .const import (
     CONF_LIGHT_TOGGLE,
     CONF_FAN_TOGGLE,
     CONF_FAN_SPEEDS,
+    CONF_FAN_DIRECTION,
     CONF_LIGHT_DIMMING,
     CONF_COLOR_TEMP,
     CONF_OPTIONAL_FEATURES,
@@ -159,6 +160,7 @@ class UniversalRFFanConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                         selector.SelectSelectorConfig(
                             options=[
                                 {"value": CONF_FAN_SPEEDS, "label": "Fan Speeds"},
+                                {"value": CONF_FAN_DIRECTION, "label": "Fan Direction"},
                                 {"value": CONF_LIGHT_DIMMING, "label": "Light Dimming"},
                                 {"value": CONF_COLOR_TEMP, "label": "Color Temperature"},
                             ],
@@ -208,10 +210,13 @@ class UniversalRFFanConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             for i in range(1, count + 1):
                 self._learning_keys.append(f"speed_{i}")
                 
+        if CONF_FAN_DIRECTION in features:
+            self._learning_keys.append("fan_direction")
+            
         if CONF_LIGHT_DIMMING in features:
             self._learning_keys.extend(["dim_up", "dim_down"])
             
         if CONF_COLOR_TEMP in features:
-            self._learning_keys.extend(["temp_warm", "temp_cool"])
+            self._learning_keys.extend(["temp_warm", "temp_neutral", "temp_cool"])
             
         return await self.async_step_learn_code()

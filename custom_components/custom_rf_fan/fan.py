@@ -21,6 +21,7 @@ from .const import (
     CONF_TRANSMITTER_ID,
     CONF_FAN_TOGGLE,
     CONF_FAN_SPEEDS,
+    CONF_FAN_DIRECTION,
     CONF_OPTIONAL_FEATURES,
     SIGNAL_STATE_UPDATED,
 )
@@ -54,6 +55,11 @@ class UniversalRFFan(UniversalRFEntity, FanEntity):
             self._attr_supported_features |= FanEntityFeature.SET_SPEED
             self._speed_count = entry.data.get("speed_count", 3)
             
+        if CONF_FAN_DIRECTION in features:
+            self._attr_supported_features |= FanEntityFeature.DIRECTION
+            self._fan_direction_code = entry.data.get("fan_direction")
+            self._attr_current_direction = "forward"
+            
         self._transmitter_id = entry.data[CONF_TRANSMITTER_ID]
         self._fan_toggle_code = entry.data[CONF_FAN_TOGGLE]
         self._attr_is_on = False
@@ -73,6 +79,8 @@ class UniversalRFFan(UniversalRFEntity, FanEntity):
                 speed_code = self._entry.data.get(f"speed_{i}")
                 if speed_code:
                     attrs[f"speed_{i}_code"] = speed_code
+        if getattr(self, "_fan_direction_code", None):
+            attrs["direction_code"] = self._fan_direction_code
         return attrs
 
 
@@ -100,6 +108,10 @@ class UniversalRFFan(UniversalRFEntity, FanEntity):
                     self._attr_percentage = int((i / self._speed_count) * 100)
                     update_needed = True
                     break
+            
+        if getattr(self, "_fan_direction_code", None) and payload == self._fan_direction_code:
+            self._attr_current_direction = "reverse" if self._attr_current_direction == "forward" else "forward"
+            update_needed = True
             
         if update_needed:
             self.async_write_ha_state()
@@ -162,3 +174,14 @@ class UniversalRFFan(UniversalRFEntity, FanEntity):
             return
             
         await self.async_turn_on(percentage=percentage)
+
+    async def async_set_direction(self, direction: str) -> None:
+        """Set the direction of the fan."""
+        if getattr(self, "_fan_direction_code", None):
+            await async_send_command(
+                self.hass,
+                self._transmitter_id,
+                self._get_command(self._fan_direction_code),
+            )
+            self._attr_current_direction = direction
+            self.async_write_ha_state()

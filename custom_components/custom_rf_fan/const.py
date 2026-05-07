@@ -8,6 +8,7 @@ CONF_FAN_TOGGLE = "fan_toggle"
 
 # Optional features
 CONF_FAN_SPEEDS = "fan_speeds"
+CONF_FAN_DIRECTION = "fan_direction"
 CONF_LIGHT_DIMMING = "light_dimming"
 CONF_COLOR_TEMP = "color_temp"
 
