@@ -32,5 +32,21 @@
         }
       }
     }
+  },
+  "selector": {
+    "optional_features": {
+      "options": {
+        "fan_speeds": "Fan Speeds",
+        "fan_direction": "Fan Direction",
+        "light_dimming": "Light Dimming",
+        "color_temp": "Color Temperature"
+      }
+    },
+    "speed_count": {
+      "options": {
+        "3": "3 Speeds (1-3)",
+        "5": "5 Speeds (1-5)"
+      }
+    }
   }
 }

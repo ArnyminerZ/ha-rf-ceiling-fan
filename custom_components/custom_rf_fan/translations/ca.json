@@ -32,5 +32,21 @@
         }
       }
     }
+  },
+  "selector": {
+    "optional_features": {
+      "options": {
+        "fan_speeds": "Velocitats del ventilador",
+        "fan_direction": "Direcció del ventilador",
+        "light_dimming": "Atenuació de la llum",
+        "color_temp": "Temperatura de color"
+      }
+    },
+    "speed_count": {
+      "options": {
+        "3": "3 velocitats (1-3)",
+        "5": "5 velocitats (1-5)"
+      }
+    }
   }
 }

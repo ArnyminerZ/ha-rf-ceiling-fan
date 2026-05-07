@@ -159,13 +159,14 @@ class UniversalRFFanConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     vol.Optional(CONF_OPTIONAL_FEATURES): selector.SelectSelector(
                         selector.SelectSelectorConfig(
                             options=[
-                                {"value": CONF_FAN_SPEEDS, "label": "Fan Speeds"},
-                                {"value": CONF_FAN_DIRECTION, "label": "Fan Direction"},
-                                {"value": CONF_LIGHT_DIMMING, "label": "Light Dimming"},
-                                {"value": CONF_COLOR_TEMP, "label": "Color Temperature"},
+                                CONF_FAN_SPEEDS,
+                                CONF_FAN_DIRECTION,
+                                CONF_LIGHT_DIMMING,
+                                CONF_COLOR_TEMP,
                             ],
                             multiple=True,
                             mode=selector.SelectSelectorMode.LIST,
+                            translation_key="optional_features",
                         )
                     )
                 }
@@ -186,11 +187,9 @@ class UniversalRFFanConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 {
                     vol.Required("speed_count", default="3"): selector.SelectSelector(
                         selector.SelectSelectorConfig(
-                            options=[
-                                {"value": "3", "label": "3 Speeds (1-3)"},
-                                {"value": "5", "label": "5 Speeds (1-5)"},
-                            ],
+                            options=["3", "5"],
                             mode=selector.SelectSelectorMode.DROPDOWN,
+                            translation_key="speed_count",
                         )
                     )
                 }
