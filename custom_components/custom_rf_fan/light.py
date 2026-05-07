@@ -7,8 +7,9 @@ from typing import Any
 from homeassistant.components.light import (
     LightEntity,
     ColorMode,
+    LightEntityFeature,
     ATTR_BRIGHTNESS,
-    ATTR_COLOR_TEMP_KELVIN,
+    ATTR_EFFECT,
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, callback
@@ -40,6 +41,7 @@ class UniversalRFLight(UniversalRFEntity, LightEntity):
     """Representation of an RF Light."""
 
     _attr_name = "Light"
+    _attr_translation_key = "rf_light"
 
     def __init__(self, hass: HomeAssistant, entry: ConfigEntry) -> None:
         """Initialize the light."""
@@ -54,17 +56,26 @@ class UniversalRFLight(UniversalRFEntity, LightEntity):
         
         self._attr_supported_color_modes = set()
         
-        if CONF_COLOR_TEMP in features:
-            self._attr_supported_color_modes.add(ColorMode.COLOR_TEMP)
-            # Add simple range
-            self._attr_min_color_temp_kelvin = 2700
-            self._attr_max_color_temp_kelvin = 6500
-        elif CONF_LIGHT_DIMMING in features:
+        if CONF_LIGHT_DIMMING in features:
             self._attr_supported_color_modes.add(ColorMode.BRIGHTNESS)
         else:
             self._attr_supported_color_modes.add(ColorMode.ONOFF)
             
+        if CONF_COLOR_TEMP in features:
+            
+            # Setup effects for discrete buttons
+            self._attr_effect_list = []
+            if entry.data.get("temp_warm"):
+                self._attr_effect_list.append("warm")
+            if entry.data.get("temp_neutral"):
+                self._attr_effect_list.append("neutral")
+            if entry.data.get("temp_cool"):
+                self._attr_effect_list.append("cool")
+                
+            if self._attr_effect_list:
+                self._attr_supported_features = LightEntityFeature.EFFECT
         self._attr_color_mode = list(self._attr_supported_color_modes)[0]
+        self._attr_brightness = 255 if ColorMode.BRIGHTNESS in self._attr_supported_color_modes else None
 
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
@@ -88,8 +99,46 @@ class UniversalRFLight(UniversalRFEntity, LightEntity):
 
     async def async_turn_on(self, **kwargs: Any) -> None:
         """Turn the light on."""
-        sent_code = False
-        
+        # Handle effect
+        if ATTR_EFFECT in kwargs:
+            effect = kwargs[ATTR_EFFECT]
+            code_key = None
+            if effect == "warm":
+                code_key = "temp_warm"
+            elif effect == "neutral":
+                code_key = "temp_neutral"
+            elif effect == "cool":
+                code_key = "temp_cool"
+                
+            if code_key and (code := self._entry.data.get(code_key)):
+                await async_send_command(self.hass, self._transmitter_id, self._get_command(code))
+                self._attr_effect = effect
+                self._attr_is_on = True
+                self.async_write_ha_state()
+                return
+        # Handle brightness slider
+        if ATTR_BRIGHTNESS in kwargs:
+            new_brightness = kwargs[ATTR_BRIGHTNESS]
+            
+            if self._attr_brightness is not None:
+                if new_brightness > self._attr_brightness:
+                    code_key = "brighten"
+                elif new_brightness < self._attr_brightness:
+                    code_key = "dim"
+                else:
+                    code_key = None
+                    
+                if code_key and (code := self._entry.data.get(code_key)):
+                    # Note: We send the code once per slider movement. 
+                    # If the RF requires holding, the user might need to adjust the slider multiple times.
+                    await async_send_command(self.hass, self._transmitter_id, self._get_command(code))
+                    
+            self._attr_brightness = new_brightness
+            self._attr_is_on = True
+            self.async_write_ha_state()
+            return
+
+        # Handle simple toggle on
         if not self._attr_is_on:
             await async_send_command(
                 self.hass,

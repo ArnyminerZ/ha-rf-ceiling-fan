@@ -48,5 +48,20 @@
         "5": "5 velocitats (1-5)"
       }
     }
+  },
+  "entity": {
+    "light": {
+      "rf_light": {
+        "state_attributes": {
+          "effect": {
+            "state": {
+              "warm": "Càlida",
+              "neutral": "Neutra",
+              "cool": "Freda"
+            }
+          }
+        }
+      }
+    }
   }
 }
