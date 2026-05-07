@@ -4,6 +4,7 @@ from __future__ import annotations
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.dispatcher import async_dispatcher_connect, async_dispatcher_send
+from homeassistant.helpers.restore_state import RestoreEntity
 from homeassistant.helpers.entity import Entity
 
 from rf_protocols import OOKCommand
@@ -11,7 +12,7 @@ from rf_protocols import OOKCommand
 from .const import DOMAIN, SIGNAL_STATE_UPDATED, SIGNAL_ENTITY_STATE_UPDATED
 
 
-class UniversalRFEntity(Entity):
+class UniversalRFEntity(RestoreEntity):
     """Base representation of a Universal RF entity."""
 
     _attr_has_entity_name = True

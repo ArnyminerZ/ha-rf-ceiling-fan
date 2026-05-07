@@ -80,6 +80,17 @@ class UniversalRFLight(UniversalRFEntity, LightEntity):
         self._attr_color_mode = list(self._attr_supported_color_modes)[0]
         self._attr_brightness = 255 if ColorMode.BRIGHTNESS in self._attr_supported_color_modes else None
 
+    async def async_added_to_hass(self) -> None:
+        """Restore state when added to hass."""
+        await super().async_added_to_hass()
+        last_state = await self.async_get_last_state()
+        if last_state is not None:
+            self._attr_is_on = last_state.state == "on"
+            if "brightness" in last_state.attributes:
+                self._attr_brightness = last_state.attributes["brightness"]
+            if "effect" in last_state.attributes:
+                self._attr_effect = last_state.attributes["effect"]
+
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
         """Return entity specific state attributes."""

@@ -70,6 +70,17 @@ class UniversalRFFan(UniversalRFEntity, FanEntity):
         """Return true if fan is on."""
         return self._attr_is_on
 
+    async def async_added_to_hass(self) -> None:
+        """Restore state when added to hass."""
+        await super().async_added_to_hass()
+        last_state = await self.async_get_last_state()
+        if last_state is not None:
+            self._attr_is_on = last_state.state == "on"
+            if "percentage" in last_state.attributes:
+                self._attr_percentage = last_state.attributes["percentage"]
+            if "current_direction" in last_state.attributes:
+                self._attr_current_direction = last_state.attributes["current_direction"]
+
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
         """Return entity specific state attributes."""
