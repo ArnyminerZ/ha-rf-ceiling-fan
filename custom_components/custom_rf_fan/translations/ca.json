@@ -1,0 +1,36 @@
+{
+  "title": "Ventilador de Sostre RF Universal",
+  "config": {
+    "step": {
+      "user": {
+        "title": "Ventilador RF Universal: Maquinari",
+        "description": "Selecciona l'entitat transmissora RF a utilitzar.",
+        "data": {
+          "transmitter_id": "Entitat transmissora RF"
+        }
+      },
+      "learn_code": {
+        "title": "Aprèn: {button}",
+        "description": "Prem el botó de {button} al teu comandament a distància, o introdueix el codi manualment a continuació.",
+        "data": {
+          "manual_code": "Codi manual (opcional)"
+        },
+        "errors": {
+          "timeout": "S'ha esgotat el temps d'espera del senyal."
+        }
+      },
+      "optional_features": {
+        "title": "Característiques opcionals",
+        "data": {
+          "optional_features": "Característiques"
+        }
+      },
+      "fan_speeds_config": {
+        "title": "Velocitats del ventilador",
+        "data": {
+          "speed_count": "Velocitats"
+        }
+      }
+    }
+  }
+}
