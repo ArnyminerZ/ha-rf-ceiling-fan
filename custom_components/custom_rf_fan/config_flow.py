@@ -214,7 +214,7 @@ class UniversalRFFanConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             self._learning_keys.append("fan_direction")
             
         if CONF_LIGHT_DIMMING in features:
-            self._learning_keys.extend(["dim_up", "dim_down"])
+            self._learning_keys.extend(["brighten", "dim"])
             
         if CONF_COLOR_TEMP in features:
             self._learning_keys.extend(["temp_warm", "temp_neutral", "temp_cool"])
