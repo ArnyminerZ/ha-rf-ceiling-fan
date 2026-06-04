@@ -13,8 +13,6 @@ from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.components.radio_frequency import async_send_command
 
-from rf_protocols import OOKCommand
-
 from .entity import UniversalRFEntity
 from .const import (
     DOMAIN,
