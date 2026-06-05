@@ -7,7 +7,7 @@ from homeassistant.helpers.dispatcher import async_dispatcher_connect, async_dis
 from homeassistant.helpers.restore_state import RestoreEntity
 from homeassistant.helpers.entity import Entity
 
-from rf_protocols import OOKCommand
+from rf_protocols.commands.ook import OOKCommand
 
 from .const import DOMAIN, SIGNAL_STATE_UPDATED, SIGNAL_ENTITY_STATE_UPDATED
 
