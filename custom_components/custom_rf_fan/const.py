@@ -21,3 +21,12 @@ EVENT_RF_RAW = "radio_frequency.raw_event"
 
 SIGNAL_STATE_UPDATED = f"{DOMAIN}_state_updated"
 SIGNAL_ENTITY_STATE_UPDATED = f"{DOMAIN}_entity_state_updated"
+
+# Tolerance applied when comparing a received RF payload against a learned
+# code. Real remotes rarely reproduce byte-identical pulse timings on every
+# press, so each pulse is allowed to differ by up to this fraction of the
+# learned pulse's duration (relative tolerance), or PULSE_TOLERANCE_MIN_US,
+# whichever is larger (absolute floor, needed since short pulses would
+# otherwise get an unrealistically tight allowance).
+PULSE_TOLERANCE_RATIO = 0.25
+PULSE_TOLERANCE_MIN_US = 100

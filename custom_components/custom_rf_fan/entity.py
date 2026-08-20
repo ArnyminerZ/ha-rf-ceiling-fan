@@ -9,7 +9,50 @@ from homeassistant.helpers.entity import Entity
 
 from rf_protocols.commands.ook import OOKCommand
 
-from .const import DOMAIN, SIGNAL_STATE_UPDATED, SIGNAL_ENTITY_STATE_UPDATED
+from .const import (
+    DOMAIN,
+    SIGNAL_STATE_UPDATED,
+    SIGNAL_ENTITY_STATE_UPDATED,
+    PULSE_TOLERANCE_RATIO,
+    PULSE_TOLERANCE_MIN_US,
+)
+
+
+def codes_match(
+    received: str | None,
+    learned: str | None,
+    tolerance: float = PULSE_TOLERANCE_RATIO,
+    min_tolerance_us: int = PULSE_TOLERANCE_MIN_US,
+) -> bool:
+    """Compare a received RF payload against a learned code with tolerance.
+
+    Physical remotes rarely reproduce byte-identical pulse timings between
+    presses (drift, temperature, RF noise), so an exact string match misses
+    real presses. Instead, both payloads are parsed into their pulse-timing
+    sequences and compared pulse-by-pulse, allowing each pulse to differ by
+    up to `tolerance` of its learned duration (or `min_tolerance_us`,
+    whichever is larger).
+    """
+    if not received or not learned:
+        return False
+    if received == learned:
+        return True
+
+    try:
+        received_pulses = [int(p.strip()) for p in received.split(",")]
+        learned_pulses = [int(p.strip()) for p in learned.split(",")]
+    except ValueError:
+        return False
+
+    if len(received_pulses) != len(learned_pulses):
+        return False
+
+    for received_val, learned_val in zip(received_pulses, learned_pulses):
+        allowed = max(min_tolerance_us, abs(learned_val) * tolerance)
+        if abs(abs(received_val) - abs(learned_val)) > allowed:
+            return False
+
+    return True
 
 
 class UniversalRFEntity(RestoreEntity):
@@ -73,6 +116,10 @@ class UniversalRFEntity(RestoreEntity):
         """Force update internal state without transmitting."""
         self._attr_is_on = (state == "on")
         self.async_write_ha_state()
+
+    def _codes_match(self, received: str | None, learned: str | None) -> bool:
+        """Check whether a received payload matches a learned code, with tolerance."""
+        return codes_match(received, learned)
 
     def _get_command(self, payload: str) -> OOKCommand:
         """Convert raw payload string to OOKCommand.

@@ -100,25 +100,25 @@ class UniversalRFFan(UniversalRFEntity, FanEntity):
             return
 
         update_needed = False
-        if payload == self._fan_toggle_code:
+        if self._codes_match(payload, self._fan_toggle_code):
             self._attr_is_on = not self._attr_is_on
             if not self._attr_is_on:
                 self._attr_percentage = 0
             elif self._speed_count > 0 and self._attr_percentage == 0:
                 self._attr_percentage = 100
             update_needed = True
-            
+
         # Handle speed codes if configured
         if self._speed_count > 0:
             for i in range(1, self._speed_count + 1):
                 speed_code = self._entry.data.get(f"speed_{i}")
-                if speed_code and payload == speed_code:
+                if speed_code and self._codes_match(payload, speed_code):
                     self._attr_is_on = True
                     self._attr_percentage = int((i / self._speed_count) * 100)
                     update_needed = True
                     break
-            
-        if getattr(self, "_fan_direction_code", None) and payload == self._fan_direction_code:
+
+        if getattr(self, "_fan_direction_code", None) and self._codes_match(payload, self._fan_direction_code):
             self._attr_current_direction = "reverse" if self._attr_current_direction == "forward" else "forward"
             update_needed = True
             

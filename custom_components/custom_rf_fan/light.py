@@ -107,7 +107,7 @@ class UniversalRFLight(UniversalRFEntity, LightEntity):
         if entry_id != self._entry.entry_id:
             return
             
-        if payload == self._light_toggle_code:
+        if self._codes_match(payload, self._light_toggle_code):
             self._attr_is_on = not self._attr_is_on
             self.async_write_ha_state()
 
