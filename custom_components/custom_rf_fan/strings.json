@@ -14,9 +14,6 @@
         "description": "Press the button for {button} on your remote, or enter it manually below.",
         "data": {
           "manual_code": "Manual Code (optional)"
-        },
-        "errors": {
-          "timeout": "Timeout waiting for signal."
         }
       },
       "optional_features": {
@@ -38,6 +35,9 @@
           "speed_count": "Speeds"
         }
       }
+    },
+    "error": {
+      "timeout": "Timeout waiting for signal."
     }
   },
   "selector": {

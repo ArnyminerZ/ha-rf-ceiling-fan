@@ -14,9 +14,6 @@
         "description": "Prem el botó de {button} al teu comandament a distància, o introdueix el codi manualment a continuació.",
         "data": {
           "manual_code": "Codi manual (opcional)"
-        },
-        "errors": {
-          "timeout": "S'ha esgotat el temps d'espera del senyal."
         }
       },
       "optional_features": {
@@ -38,6 +35,9 @@
           "speed_count": "Velocitats"
         }
       }
+    },
+    "error": {
+      "timeout": "S'ha esgotat el temps d'espera del senyal."
     }
   },
   "selector": {
