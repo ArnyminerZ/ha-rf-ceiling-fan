@@ -18,6 +18,8 @@ _LOGGER = logging.getLogger(__name__)
 
 PLATFORMS: list[str] = ["fan", "light", "select"]
 
+CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
+
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     """Set up the Universal RF Ceiling Fan component."""
     return True
