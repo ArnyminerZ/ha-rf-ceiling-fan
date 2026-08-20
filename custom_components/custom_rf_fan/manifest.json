@@ -1,10 +1,12 @@
 {
   "domain": "custom_rf_fan",
   "name": "Universal RF Ceiling Fan",
-  "codeowners": [],
+  "codeowners": ["@ArnyminerZ"],
   "config_flow": true,
   "dependencies": ["radio_frequency"],
+  "documentation": "https://github.com/ArnyminerZ/ha-rf-ceiling-fan",
   "iot_class": "local_polling",
+  "issue_tracker": "https://github.com/ArnyminerZ/ha-rf-ceiling-fan/issues",
   "requirements": ["rf-protocols>=4.0.0"],
   "version": "1.0.0",
   "homeassistant": "2026.5"
