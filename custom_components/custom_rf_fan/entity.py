@@ -52,12 +52,18 @@ def extract_first_frame(
     are stored as one frame, so when capturing a code live, keep only the
     pulses up to the first oversized gap.
     """
+    if not payload:
+        return payload
+
     pulses = _parse_pulses(payload)
     if not pulses:
         return payload
 
     for i, val in enumerate(pulses):
-        if val < 0 and abs(val) > gap_threshold_us:
+        # A gap at position 0 means the capture started mid-gap, before any
+        # frame was collected, so it isn't a real frame boundary — keep
+        # looking rather than trimming to an empty result.
+        if i > 0 and val < 0 and abs(val) > gap_threshold_us:
             return ",".join(str(p) for p in pulses[:i])
 
     return payload
