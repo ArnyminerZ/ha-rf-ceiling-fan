@@ -15,7 +15,58 @@ from .const import (
     SIGNAL_ENTITY_STATE_UPDATED,
     PULSE_TOLERANCE_RATIO,
     PULSE_TOLERANCE_MIN_US,
+    REPEAT_GAP_THRESHOLD_US,
 )
+
+
+def _parse_pulses(payload: str) -> list[int] | None:
+    """Parse a comma-separated pulse-timing payload into ints."""
+    try:
+        return [int(p.strip()) for p in payload.split(",") if p.strip()]
+    except ValueError:
+        return None
+
+
+def _pulses_match(
+    received_pulses: list[int],
+    learned_pulses: list[int],
+    tolerance: float,
+    min_tolerance_us: int,
+) -> bool:
+    """Compare two equal-length pulse sequences within tolerance."""
+    for received_val, learned_val in zip(received_pulses, learned_pulses):
+        allowed = max(min_tolerance_us, abs(learned_val) * tolerance)
+        if abs(abs(received_val) - abs(learned_val)) > allowed:
+            return False
+    return True
+
+
+def extract_first_frame(
+    payload: str, gap_threshold_us: int = REPEAT_GAP_THRESHOLD_US
+) -> str:
+    """Trim a raw RF capture down to its first repeat/frame.
+
+    A physical remote repeats its code several times per button press, and
+    the receiver often reports the whole burst (all repeats back to back,
+    separated by large inter-repeat gaps) as a single payload. Learned codes
+    are stored as one frame, so when capturing a code live, keep only the
+    pulses up to the first oversized gap.
+    """
+    if not payload:
+        return payload
+
+    pulses = _parse_pulses(payload)
+    if not pulses:
+        return payload
+
+    for i, val in enumerate(pulses):
+        # A gap at position 0 means the capture started mid-gap, before any
+        # frame was collected, so it isn't a real frame boundary — keep
+        # looking rather than trimming to an empty result.
+        if i > 0 and val < 0 and abs(val) > gap_threshold_us:
+            return ",".join(str(p) for p in pulses[:i])
+
+    return payload
 
 
 def codes_match(
@@ -32,27 +83,42 @@ def codes_match(
     sequences and compared pulse-by-pulse, allowing each pulse to differ by
     up to `tolerance` of its learned duration (or `min_tolerance_us`,
     whichever is larger).
+
+    A learned code is stored as a single frame, but a real button press is
+    usually reported as several repeats of that frame back to back (the
+    remote repeats its transmission, and the receiver's idle window doesn't
+    always split each repeat into its own event). So when the payloads
+    differ in length, look for one occurrence of the learned frame anywhere
+    inside the received burst instead of requiring a whole-payload match.
     """
     if not received or not learned:
         return False
     if received == learned:
         return True
 
-    try:
-        received_pulses = [int(p.strip()) for p in received.split(",")]
-        learned_pulses = [int(p.strip()) for p in learned.split(",")]
-    except ValueError:
+    received_pulses = _parse_pulses(received)
+    learned_pulses = _parse_pulses(learned)
+    if received_pulses is None or learned_pulses is None:
         return False
 
-    if len(received_pulses) != len(learned_pulses):
+    if len(received_pulses) == len(learned_pulses):
+        return _pulses_match(received_pulses, learned_pulses, tolerance, min_tolerance_us)
+
+    frame_len = len(learned_pulses)
+    if frame_len == 0 or len(received_pulses) < frame_len:
         return False
 
-    for received_val, learned_val in zip(received_pulses, learned_pulses):
-        allowed = max(min_tolerance_us, abs(learned_val) * tolerance)
-        if abs(abs(received_val) - abs(learned_val)) > allowed:
-            return False
+    # Every other pulse in a frame is a space (negative); only try aligning
+    # the window at offsets that preserve that mark/space parity.
+    first_pulse_positive = learned_pulses[0] >= 0
+    for start in range(len(received_pulses) - frame_len + 1):
+        if (received_pulses[start] >= 0) != first_pulse_positive:
+            continue
+        window = received_pulses[start : start + frame_len]
+        if _pulses_match(window, learned_pulses, tolerance, min_tolerance_us):
+            return True
 
-    return True
+    return False
 
 
 class UniversalRFEntity(RestoreEntity):

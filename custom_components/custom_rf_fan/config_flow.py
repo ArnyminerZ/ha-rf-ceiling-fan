@@ -26,6 +26,7 @@ from .const import (
     DEFAULT_DIMMING_DELAY_MS,
     EVENT_RF_RAW,
 )
+from .entity import extract_first_frame
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -112,9 +113,11 @@ class UniversalRFFanConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 # Wait up to 30 seconds for a code
                 # Note: This blocks the config flow, but that is acceptable for learning steps
                 payload = await asyncio.wait_for(future, timeout=30.0)
-                self._data[self._current_learning_key] = payload
+                if not payload:
+                    raise asyncio.TimeoutError
+                self._data[self._current_learning_key] = extract_first_frame(payload)
                 self._learning_keys.pop(0)
-                
+
                 # Still codes to learn, recursively show the same step
                 return await self.async_step_learn_code()
             except asyncio.TimeoutError:
