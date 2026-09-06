@@ -30,3 +30,11 @@ SIGNAL_ENTITY_STATE_UPDATED = f"{DOMAIN}_entity_state_updated"
 # otherwise get an unrealistically tight allowance).
 PULSE_TOLERANCE_RATIO = 0.25
 PULSE_TOLERANCE_MIN_US = 100
+
+# A physical remote repeats its code several times per button press, and the
+# receiver often reports the whole burst as a single payload with a long gap
+# between repeats (the inter-repeat gap, e.g. ~9ms) but no gap anywhere near
+# that long inside a single frame. This threshold is used to tell the two
+# apart: any space pulse longer than this is treated as a boundary between
+# repeats rather than part of the frame itself.
+REPEAT_GAP_THRESHOLD_US = 3000
