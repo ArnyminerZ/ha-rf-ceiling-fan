@@ -106,10 +106,17 @@ class UniversalRFLight(UniversalRFEntity, LightEntity):
         """Handle received RF payload."""
         if entry_id != self._entry.entry_id:
             return
-            
+
         if self._codes_match(payload, self._light_toggle_code):
             self._attr_is_on = not self._attr_is_on
+            _LOGGER.debug("Light toggle code matched, new state: %s", self._attr_is_on)
             self.async_write_ha_state()
+        else:
+            _LOGGER.debug(
+                "Payload did not match light toggle code (learned=%s, received=%s)",
+                self._light_toggle_code,
+                payload,
+            )
 
     async def async_turn_on(self, **kwargs: Any) -> None:
         """Turn the light on."""

@@ -34,6 +34,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     def _async_rf_event_received(event: Any) -> None:
         """Handle incoming RF events to synchronize state."""
         payload = event.data.get("payload")
+        _LOGGER.debug("Received %s event: payload=%s", EVENT_RF_RAW, payload)
         if not payload:
             return
 

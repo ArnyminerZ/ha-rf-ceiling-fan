@@ -121,9 +121,12 @@ class UniversalRFFan(UniversalRFEntity, FanEntity):
         if getattr(self, "_fan_direction_code", None) and self._codes_match(payload, self._fan_direction_code):
             self._attr_current_direction = "reverse" if self._attr_current_direction == "forward" else "forward"
             update_needed = True
-            
+
         if update_needed:
+            _LOGGER.debug("Fan payload matched a learned code, new state: is_on=%s percentage=%s", self._attr_is_on, self._attr_percentage)
             self.async_write_ha_state()
+        else:
+            _LOGGER.debug("Payload did not match any learned fan code (received=%s)", payload)
 
     async def async_turn_on(
         self,
