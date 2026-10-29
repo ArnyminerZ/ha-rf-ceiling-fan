@@ -26,7 +26,7 @@ from .const import (
     DEFAULT_DIMMING_DELAY_MS,
     EVENT_RF_RAW,
 )
-from .entity import extract_first_frame
+from .entity import extract_first_frame, normalize_payload
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -76,7 +76,7 @@ class UniversalRFFanConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         def _async_rf_event_received(event: Any) -> None:
             """Handle RF event."""
             if not future.done():
-                future.set_result(event.data.get("payload"))
+                future.set_result(normalize_payload(event.data.get("payload")))
 
         unsub = self.hass.bus.async_listen(EVENT_RF_RAW, _async_rf_event_received)
         _LOGGER.debug("Listening for %s while learning a code", EVENT_RF_RAW)
