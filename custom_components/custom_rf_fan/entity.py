@@ -1,16 +1,16 @@
 """Base entity for Universal RF Ceiling Fan."""
 from __future__ import annotations
 
-from homeassistant.config_entries import ConfigEntry
-from collections.abc import Callable
+from typing import TYPE_CHECKING
 
-from homeassistant.components.radio_frequency import async_subscribe_receiver
-from homeassistant.core import CALLBACK_TYPE, HomeAssistant, callback
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.dispatcher import async_dispatcher_connect, async_dispatcher_send
 from homeassistant.helpers.restore_state import RestoreEntity
 from homeassistant.helpers.entity import Entity
 
-from rf_protocols.commands.ook import OOKCommand
+if TYPE_CHECKING:
+    from rf_protocols.commands.ook import OOKCommand
 
 from .const import (
     DOMAIN,
@@ -20,27 +20,6 @@ from .const import (
     PULSE_TOLERANCE_MIN_US,
     REPEAT_GAP_THRESHOLD_US,
 )
-
-
-def signal_to_payload(timings: list[int]) -> str:
-    """Convert received timings to a payload with alternating mark/space signs."""
-    return ",".join(
-        str(abs(val) if i % 2 == 0 else -abs(val)) for i, val in enumerate(timings)
-    )
-
-
-@callback
-def async_subscribe_payloads(
-    hass: HomeAssistant, receiver_id: str, payload_callback: Callable[[str], None]
-) -> CALLBACK_TYPE:
-    """Subscribe to a radio_frequency receiver, delivering signals as payload strings."""
-
-    @callback
-    def _on_signal(signal) -> None:
-        if signal.timings:
-            payload_callback(signal_to_payload(signal.timings))
-
-    return async_subscribe_receiver(hass, receiver_id, _on_signal)
 
 
 def _parse_pulses(payload: str) -> list[int] | None:
@@ -211,12 +190,16 @@ class UniversalRFEntity(RestoreEntity):
         """Check whether a received payload matches a learned code, with tolerance."""
         return codes_match(received, learned)
 
-    def _get_command(self, payload: str) -> OOKCommand:
+    def _get_command(self, payload: str) -> "OOKCommand":
         """Convert raw payload string to OOKCommand.
         
         Handles conversion from ESPHome-style alternating positive pulses
         to signed timings (positive for pulse, negative for space).
         """
+        # Imported lazily so the config flow loads even if rf_protocols isn't
+        # installed yet; it is provided by Home Assistant's radio_frequency.
+        from rf_protocols.commands.ook import OOKCommand
+
         raw_pulses = [int(p.strip()) for p in payload.split(",")]
         # Ensure alternating signs: positive for pulse (even), negative for space (odd)
         pulses = [

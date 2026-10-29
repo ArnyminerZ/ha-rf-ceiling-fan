@@ -6,8 +6,7 @@
         "title": "Ventilador RF Universal: Maquinari",
         "description": "Selecciona l'entitat transmissora RF a utilitzar.",
         "data": {
-          "transmitter_id": "Entitat transmissora RF",
-          "receiver_id": "Entitat receptora RF (opcional, necessària per sincronitzar el comandament físic)"
+          "transmitter_id": "Entitat transmissora RF"
         }
       },
       "learn_code": {
@@ -38,8 +37,7 @@
       }
     },
     "error": {
-      "timeout": "S'ha esgotat el temps d'espera del senyal.",
-      "no_receiver": "No s'ha seleccionat cap receptor RF; introdueix el codi manualment."
+      "timeout": "S'ha esgotat el temps d'espera del senyal."
     }
   },
   "selector": {

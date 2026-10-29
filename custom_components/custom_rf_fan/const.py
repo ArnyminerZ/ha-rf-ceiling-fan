@@ -3,7 +3,6 @@
 DOMAIN = "custom_rf_fan"
 
 CONF_TRANSMITTER_ID = "transmitter_id"
-CONF_RECEIVER_ID = "receiver_id"
 CONF_LIGHT_TOGGLE = "light_toggle"
 CONF_FAN_TOGGLE = "fan_toggle"
 
@@ -17,6 +16,10 @@ CONF_OPTIONAL_FEATURES = "optional_features"
 
 DEFAULT_DIMMING_LEVELS = 30
 DEFAULT_DIMMING_DELAY_MS = 100
+
+# Event fired by the ESPHome receiver (homeassistant.event action) for every
+# remote press; its "payload" field holds the comma-separated pulse timings.
+EVENT_RF_RAW = "esphome.rf_raw"
 
 SIGNAL_STATE_UPDATED = f"{DOMAIN}_state_updated"
 SIGNAL_ENTITY_STATE_UPDATED = f"{DOMAIN}_entity_state_updated"

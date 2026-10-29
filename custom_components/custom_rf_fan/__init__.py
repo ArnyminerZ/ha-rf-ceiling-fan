@@ -12,8 +12,7 @@ from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.typing import ConfigType
 from homeassistant.helpers.dispatcher import async_dispatcher_send
 
-from .const import CONF_RECEIVER_ID, DOMAIN, SIGNAL_STATE_UPDATED
-from .entity import async_subscribe_payloads
+from .const import DOMAIN, EVENT_RF_RAW, SIGNAL_STATE_UPDATED
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -31,20 +30,16 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 
-    receiver_id = entry.data.get(CONF_RECEIVER_ID)
-    if receiver_id:
-        @callback
-        def _async_rf_payload_received(payload: str) -> None:
-            """Forward received RF payloads to the entities to synchronize state."""
+    @callback
+    def _async_rf_event_received(event: Any) -> None:
+        """Forward RF payloads reported by the ESPHome receiver to the entities."""
+        payload = event.data.get("payload")
+        if payload:
             async_dispatcher_send(hass, SIGNAL_STATE_UPDATED, entry.entry_id, payload)
 
-        entry.async_on_unload(
-            async_subscribe_payloads(hass, receiver_id, _async_rf_payload_received)
-        )
-    else:
-        _LOGGER.warning(
-            "No RF receiver configured; physical remote presses will not update state"
-        )
+    entry.async_on_unload(
+        hass.bus.async_listen(EVENT_RF_RAW, _async_rf_event_received)
+    )
 
     return True
 
