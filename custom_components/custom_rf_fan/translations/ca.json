@@ -10,11 +10,7 @@
         }
       },
       "learn_code": {
-        "title": "Aprèn: {button}",
-        "description": "Prem Envia amb el camp del codi buit i, tot seguit, prem el botó de {button} del comandament en menys de 30 segons. També pots introduir el codi manualment a sota.",
-        "data": {
-          "manual_code": "Codi manual (deixa'l buit per aprendre'l del comandament)"
-        }
+        "title": "Aprèn: {button}"
       },
       "optional_features": {
         "title": "Característiques opcionals",
@@ -34,10 +30,20 @@
         "data": {
           "speed_count": "Velocitats"
         }
+      },
+      "learn_manual": {
+        "title": "No s'ha rebut cap senyal",
+        "description": "Introdueix manualment el codi de {button} (p. ex. copiat d'ESPHome), o deixa el camp buit per tornar-ho a provar amb el comandament.",
+        "data": {
+          "manual_code": "Codi manual"
+        }
       }
     },
     "error": {
       "timeout": "S'ha esgotat el temps d'espera del senyal."
+    },
+    "progress": {
+      "listening": "Prem ara el botó de {button} del comandament (s'esperarà fins a 30 segons)."
     }
   },
   "selector": {
