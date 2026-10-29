@@ -11,9 +11,9 @@
       },
       "learn_code": {
         "title": "Aprèn: {button}",
-        "description": "Prem el botó de {button} al teu comandament a distància, o introdueix el codi manualment a continuació.",
+        "description": "Prem Envia amb el camp del codi buit i, tot seguit, prem el botó de {button} del comandament en menys de 30 segons. També pots introduir el codi manualment a sota.",
         "data": {
-          "manual_code": "Codi manual (opcional)"
+          "manual_code": "Codi manual (deixa'l buit per aprendre'l del comandament)"
         }
       },
       "optional_features": {

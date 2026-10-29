@@ -34,6 +34,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     def _async_rf_event_received(event: Any) -> None:
         """Forward RF payloads reported by the ESPHome receiver to the entities."""
         payload = event.data.get("payload")
+        _LOGGER.debug("Received %s payload: %s", EVENT_RF_RAW, payload)
         if payload:
             async_dispatcher_send(hass, SIGNAL_STATE_UPDATED, entry.entry_id, payload)
 
