@@ -1,13 +1,16 @@
 """Base entity for Universal RF Ceiling Fan."""
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.dispatcher import async_dispatcher_connect, async_dispatcher_send
 from homeassistant.helpers.restore_state import RestoreEntity
 from homeassistant.helpers.entity import Entity
 
-from rf_protocols.commands.ook import OOKCommand
+if TYPE_CHECKING:
+    from rf_protocols.commands.ook import OOKCommand
 
 from .const import (
     DOMAIN,
@@ -187,12 +190,16 @@ class UniversalRFEntity(RestoreEntity):
         """Check whether a received payload matches a learned code, with tolerance."""
         return codes_match(received, learned)
 
-    def _get_command(self, payload: str) -> OOKCommand:
+    def _get_command(self, payload: str) -> "OOKCommand":
         """Convert raw payload string to OOKCommand.
         
         Handles conversion from ESPHome-style alternating positive pulses
         to signed timings (positive for pulse, negative for space).
         """
+        # Imported lazily so the config flow loads even if rf_protocols isn't
+        # installed yet; it is provided by Home Assistant's radio_frequency.
+        from rf_protocols.commands.ook import OOKCommand
+
         raw_pulses = [int(p.strip()) for p in payload.split(",")]
         # Ensure alternating signs: positive for pulse (even), negative for space (odd)
         pulses = [
