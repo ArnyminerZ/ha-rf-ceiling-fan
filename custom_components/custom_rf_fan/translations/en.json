@@ -10,11 +10,7 @@
         }
       },
       "learn_code": {
-        "title": "Learn: {button}",
-        "description": "Press Submit with the code field empty, then press the button for {button} on your remote within 30 seconds. Alternatively, enter the code manually below.",
-        "data": {
-          "manual_code": "Manual Code (leave empty to learn from the remote)"
-        }
+        "title": "Learn: {button}"
       },
       "optional_features": {
         "title": "Optional Features",
@@ -34,10 +30,20 @@
         "data": {
           "speed_count": "Speeds"
         }
+      },
+      "learn_manual": {
+        "title": "No signal received",
+        "description": "Enter the code for {button} manually (e.g. pasted from an ESPHome dump), or leave the field empty to try again with the remote.",
+        "data": {
+          "manual_code": "Manual Code"
+        }
       }
     },
     "error": {
       "timeout": "Timeout waiting for signal."
+    },
+    "progress": {
+      "listening": "Press the button for {button} on your remote now (waiting up to 30 seconds)."
     }
   },
   "selector": {
