@@ -41,6 +41,7 @@ class UniversalRFFanConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         self._learning_keys: list[str] = []
         self._current_learning_key: str | None = None
         self._learning_phase: str = "mandatory"
+        self._learn_task: asyncio.Task[str | None] | None = None
 
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
@@ -67,10 +68,42 @@ class UniversalRFFanConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         """Get a human readable label for a button key."""
         return key.replace("_", " ").title()
 
+    async def _async_wait_for_payload(self) -> str | None:
+        """Wait up to 30 seconds for an RF payload from the ESPHome receiver."""
+        future: asyncio.Future[str | None] = self.hass.loop.create_future()
+
+        @callback
+        def _async_rf_event_received(event: Any) -> None:
+            """Handle RF event."""
+            if not future.done():
+                future.set_result(event.data.get("payload"))
+
+        unsub = self.hass.bus.async_listen(EVENT_RF_RAW, _async_rf_event_received)
+        _LOGGER.debug("Listening for %s while learning a code", EVENT_RF_RAW)
+        try:
+            payload = await asyncio.wait_for(future, timeout=30.0)
+            _LOGGER.debug("Received %s payload while learning: %s", EVENT_RF_RAW, payload)
+            return payload
+        except asyncio.TimeoutError:
+            _LOGGER.debug("Timed out waiting for %s", EVENT_RF_RAW)
+            return None
+        finally:
+            unsub()
+
+    @callback
+    def async_remove(self) -> None:
+        """Cancel any pending code capture when the flow is removed."""
+        if self._learn_task is not None:
+            self._learn_task.cancel()
+
     async def async_step_learn_code(
         self, user_input: dict[str, Any] | None = None
     ) -> FlowResult:
-        """Learn a specific code by capturing the `esphome.rf_raw` event."""
+        """Learn a specific code by capturing the `esphome.rf_raw` event.
+
+        Listening starts as soon as the step is shown, so the button can be
+        pressed right away; the flow falls back to manual entry on timeout.
+        """
         if not self._learning_keys:
             if self._learning_phase == "mandatory":
                 return await self.async_step_optional_features()
@@ -80,71 +113,58 @@ class UniversalRFFanConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 )
 
         self._current_learning_key = self._learning_keys[0]
-        button_label = self._get_button_label(self._current_learning_key)
 
+        if self._learn_task is None:
+            self._learn_task = self.hass.async_create_task(
+                self._async_wait_for_payload()
+            )
+
+        if not self._learn_task.done():
+            return self.async_show_progress(
+                step_id="learn_code",
+                progress_action="listening",
+                progress_task=self._learn_task,
+                description_placeholders={
+                    "button": self._get_button_label(self._current_learning_key)
+                },
+            )
+
+        payload = self._learn_task.result()
+        self._learn_task = None
+        if not payload:
+            return self.async_show_progress_done(next_step_id="learn_manual")
+
+        self._data[self._current_learning_key] = extract_first_frame(payload)
+        self._learning_keys.pop(0)
+        return self.async_show_progress_done(next_step_id="learn_code")
+
+    async def async_step_learn_manual(
+        self, user_input: dict[str, Any] | None = None
+    ) -> FlowResult:
+        """Enter a code manually, or retry listening, after a capture timeout."""
         if user_input is not None:
-            # Check for manual code entry first
             manual_code = user_input.get("manual_code")
-            if manual_code:
-                # Clean up the input (remove brackets, spaces, etc.)
-                # This allows pasting directly from ESPHome: [123, -456, ...]
-                cleaned_code = (
-                    manual_code.replace("[", "")
-                    .replace("]", "")
-                    .replace(" ", "")
-                    .strip()
-                )
-                self._data[self._current_learning_key] = cleaned_code
-                self._learning_keys.pop(0)
+            if not manual_code:
                 return await self.async_step_learn_code()
 
-            # Otherwise, start the learning process
-            future: asyncio.Future[str] = asyncio.Future()
-
-            @callback
-            def _async_rf_event_received(event: Any) -> None:
-                """Handle RF event."""
-                if not future.done():
-                    future.set_result(event.data.get("payload"))
-
-            unsub = self.hass.bus.async_listen(EVENT_RF_RAW, _async_rf_event_received)
-            _LOGGER.debug("Listening for %s to learn %s", EVENT_RF_RAW, button_label)
-
-            try:
-                # Wait up to 30 seconds for a code
-                # Note: This blocks the config flow, but that is acceptable for learning steps
-                payload = await asyncio.wait_for(future, timeout=30.0)
-                _LOGGER.debug("Received %s payload while learning: %s", EVENT_RF_RAW, payload)
-                if not payload:
-                    raise asyncio.TimeoutError
-                self._data[self._current_learning_key] = extract_first_frame(payload)
-                self._learning_keys.pop(0)
-
-                # Still codes to learn, recursively show the same step
-                return await self.async_step_learn_code()
-            except asyncio.TimeoutError:
-                _LOGGER.debug("Timed out waiting for %s", EVENT_RF_RAW)
-                return self.async_show_form(
-                    step_id="learn_code",
-                    errors={"base": "timeout"},
-                    data_schema=vol.Schema(
-                        {
-                            vol.Optional("manual_code"): str,
-                        }
-                    ),
-                    description_placeholders={"button": button_label},
-                )
-            finally:
-                unsub()
+            # Clean up the input (remove brackets, spaces, etc.)
+            # This allows pasting directly from ESPHome: [123, -456, ...]
+            self._data[self._current_learning_key] = (
+                manual_code.replace("[", "")
+                .replace("]", "")
+                .replace(" ", "")
+                .strip()
+            )
+            self._learning_keys.pop(0)
+            return await self.async_step_learn_code()
 
         return self.async_show_form(
-            step_id="learn_code",
-            data_schema=vol.Schema(
-                {
-                    vol.Optional("manual_code"): str,
-                }
-            ),
-            description_placeholders={"button": button_label},
+            step_id="learn_manual",
+            errors={"base": "timeout"},
+            data_schema=vol.Schema({vol.Optional("manual_code"): str}),
+            description_placeholders={
+                "button": self._get_button_label(self._current_learning_key)
+            },
         )
 
     async def async_step_optional_features(
