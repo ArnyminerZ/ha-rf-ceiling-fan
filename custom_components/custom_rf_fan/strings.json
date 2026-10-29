@@ -11,9 +11,9 @@
       },
       "learn_code": {
         "title": "Learn: {button}",
-        "description": "Press the button for {button} on your remote, or enter it manually below.",
+        "description": "Press Submit with the code field empty, then press the button for {button} on your remote within 30 seconds. Alternatively, enter the code manually below.",
         "data": {
-          "manual_code": "Manual Code (optional)"
+          "manual_code": "Manual Code (leave empty to learn from the remote)"
         }
       },
       "optional_features": {

@@ -108,11 +108,13 @@ class UniversalRFFanConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     future.set_result(event.data.get("payload"))
 
             unsub = self.hass.bus.async_listen(EVENT_RF_RAW, _async_rf_event_received)
+            _LOGGER.debug("Listening for %s to learn %s", EVENT_RF_RAW, button_label)
 
             try:
                 # Wait up to 30 seconds for a code
                 # Note: This blocks the config flow, but that is acceptable for learning steps
                 payload = await asyncio.wait_for(future, timeout=30.0)
+                _LOGGER.debug("Received %s payload while learning: %s", EVENT_RF_RAW, payload)
                 if not payload:
                     raise asyncio.TimeoutError
                 self._data[self._current_learning_key] = extract_first_frame(payload)
@@ -121,6 +123,7 @@ class UniversalRFFanConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 # Still codes to learn, recursively show the same step
                 return await self.async_step_learn_code()
             except asyncio.TimeoutError:
+                _LOGGER.debug("Timed out waiting for %s", EVENT_RF_RAW)
                 return self.async_show_form(
                     step_id="learn_code",
                     errors={"base": "timeout"},
