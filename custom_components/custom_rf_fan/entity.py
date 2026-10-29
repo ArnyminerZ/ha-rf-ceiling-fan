@@ -2,7 +2,10 @@
 from __future__ import annotations
 
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import HomeAssistant, callback
+from collections.abc import Callable
+
+from homeassistant.components.radio_frequency import async_subscribe_receiver
+from homeassistant.core import CALLBACK_TYPE, HomeAssistant, callback
 from homeassistant.helpers.dispatcher import async_dispatcher_connect, async_dispatcher_send
 from homeassistant.helpers.restore_state import RestoreEntity
 from homeassistant.helpers.entity import Entity
@@ -17,6 +20,27 @@ from .const import (
     PULSE_TOLERANCE_MIN_US,
     REPEAT_GAP_THRESHOLD_US,
 )
+
+
+def signal_to_payload(timings: list[int]) -> str:
+    """Convert received timings to a payload with alternating mark/space signs."""
+    return ",".join(
+        str(abs(val) if i % 2 == 0 else -abs(val)) for i, val in enumerate(timings)
+    )
+
+
+@callback
+def async_subscribe_payloads(
+    hass: HomeAssistant, receiver_id: str, payload_callback: Callable[[str], None]
+) -> CALLBACK_TYPE:
+    """Subscribe to a radio_frequency receiver, delivering signals as payload strings."""
+
+    @callback
+    def _on_signal(signal) -> None:
+        if signal.timings:
+            payload_callback(signal_to_payload(signal.timings))
+
+    return async_subscribe_receiver(hass, receiver_id, _on_signal)
 
 
 def _parse_pulses(payload: str) -> list[int] | None:

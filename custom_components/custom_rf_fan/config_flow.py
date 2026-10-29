@@ -15,6 +15,7 @@ from homeassistant.data_entry_flow import FlowResult
 from .const import (
     DOMAIN,
     CONF_TRANSMITTER_ID,
+    CONF_RECEIVER_ID,
     CONF_LIGHT_TOGGLE,
     CONF_FAN_TOGGLE,
     CONF_FAN_SPEEDS,
@@ -24,9 +25,8 @@ from .const import (
     CONF_OPTIONAL_FEATURES,
     DEFAULT_DIMMING_LEVELS,
     DEFAULT_DIMMING_DELAY_MS,
-    EVENT_RF_RAW,
 )
-from .entity import extract_first_frame
+from .entity import async_subscribe_payloads, extract_first_frame
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -48,6 +48,8 @@ class UniversalRFFanConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         """Handle the initial step (Hardware Selection)."""
         if user_input is not None:
             self._data[CONF_TRANSMITTER_ID] = user_input[CONF_TRANSMITTER_ID]
+            if user_input.get(CONF_RECEIVER_ID):
+                self._data[CONF_RECEIVER_ID] = user_input[CONF_RECEIVER_ID]
             self._learning_keys = [CONF_LIGHT_TOGGLE, CONF_FAN_TOGGLE]
             self._learning_phase = "mandatory"
             return await self.async_step_learn_code()
@@ -59,6 +61,9 @@ class UniversalRFFanConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     vol.Required(CONF_TRANSMITTER_ID): selector.EntitySelector(
                         selector.EntitySelectorConfig(domain="radio_frequency")
                     ),
+                    vol.Optional(CONF_RECEIVER_ID): selector.EntitySelector(
+                        selector.EntitySelectorConfig(domain="radio_frequency")
+                    ),
                 }
             ),
         )
@@ -67,10 +72,19 @@ class UniversalRFFanConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         """Get a human readable label for a button key."""
         return key.replace("_", " ").title()
 
+    def _show_learn_form(self, button_label: str, error: str) -> FlowResult:
+        """Show the learn form with an error."""
+        return self.async_show_form(
+            step_id="learn_code",
+            errors={"base": error},
+            data_schema=vol.Schema({vol.Optional("manual_code"): str}),
+            description_placeholders={"button": button_label},
+        )
+
     async def async_step_learn_code(
         self, user_input: dict[str, Any] | None = None
     ) -> FlowResult:
-        """Learn a specific code by capturing radio_frequency.raw_event."""
+        """Learn a specific code by capturing a signal from the RF receiver."""
         if not self._learning_keys:
             if self._learning_phase == "mandatory":
                 return await self.async_step_optional_features()
@@ -101,13 +115,19 @@ class UniversalRFFanConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             # Otherwise, start the learning process
             future: asyncio.Future[str] = asyncio.Future()
 
-            @callback
-            def _async_rf_event_received(event: Any) -> None:
-                """Handle RF event."""
-                if not future.done():
-                    future.set_result(event.data.get("payload"))
+            receiver_id = self._data.get(CONF_RECEIVER_ID)
+            if not receiver_id:
+                return self._show_learn_form(button_label, "no_receiver")
 
-            unsub = self.hass.bus.async_listen(EVENT_RF_RAW, _async_rf_event_received)
+            @callback
+            def _async_rf_payload_received(payload: str) -> None:
+                """Handle RF payload."""
+                if not future.done():
+                    future.set_result(payload)
+
+            unsub = async_subscribe_payloads(
+                self.hass, receiver_id, _async_rf_payload_received
+            )
 
             try:
                 # Wait up to 30 seconds for a code
