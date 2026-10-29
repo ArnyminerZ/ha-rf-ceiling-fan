@@ -1,7 +1,7 @@
 """Base entity for Universal RF Ceiling Fan."""
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, callback
@@ -20,6 +20,21 @@ from .const import (
     PULSE_TOLERANCE_MIN_US,
     REPEAT_GAP_THRESHOLD_US,
 )
+
+
+def normalize_payload(payload: Any) -> str | None:
+    """Return an RF event payload as a comma-separated pulse string.
+
+    Home Assistant renders the ESPHome event template into a list of ints
+    rather than keeping the string, so accept both forms.
+    """
+    if payload is None:
+        return None
+    if isinstance(payload, (list, tuple)):
+        return ",".join(str(int(p)) for p in payload) or None
+    if isinstance(payload, (int, float)):
+        return str(int(payload))
+    return str(payload).strip() or None
 
 
 def _parse_pulses(payload: str) -> list[int] | None:
