@@ -6,8 +6,7 @@
         "title": "Universal RF Fan: Hardware",
         "description": "Select the RF transmitter entity to use.",
         "data": {
-          "transmitter_id": "RF Transmitter Entity",
-          "receiver_id": "RF Receiver Entity (optional, needed to sync the physical remote)"
+          "transmitter_id": "RF Transmitter Entity"
         }
       },
       "learn_code": {
@@ -38,8 +37,7 @@
       }
     },
     "error": {
-      "timeout": "Timeout waiting for signal.",
-      "no_receiver": "No RF receiver selected; enter the code manually."
+      "timeout": "Timeout waiting for signal."
     }
   },
   "selector": {
