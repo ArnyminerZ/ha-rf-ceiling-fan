@@ -136,7 +136,15 @@ class UniversalRFFanConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
         self._data[self._current_learning_key] = extract_first_frame(payload)
         self._learning_keys.pop(0)
-        return self.async_show_progress_done(next_step_id="learn_code")
+        # Must be a different step id than the one showing progress: the
+        # frontend is only told to refresh when the step id changes.
+        return self.async_show_progress_done(next_step_id="learn_next")
+
+    async def async_step_learn_next(
+        self, user_input: dict[str, Any] | None = None
+    ) -> FlowResult:
+        """Move on to the next code (or the next phase) after a capture."""
+        return await self.async_step_learn_code()
 
     async def async_step_learn_manual(
         self, user_input: dict[str, Any] | None = None
